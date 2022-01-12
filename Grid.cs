@@ -23,7 +23,7 @@ namespace OpenTKTutorial
                 for (int y = 0; y < Ysize; y++)
                 {
                     Point p = new Point(x, y);
-                    GridElement gridElement = new GridElement(p);
+                    GridElement gridElement = new GridElement();
                     GridData[x,y] = gridElement;
                 }
             }

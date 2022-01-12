@@ -21,17 +21,17 @@
 
         <TextBox x:Name="TextBoxTimerLabel" HorizontalAlignment="Left" Margin="0,16,0,0" TextWrapping="Wrap" Text="Timer" VerticalAlignment="Top" Width="115" TextAlignment="Center" BorderBrush="{x:Null}" Background="{x:Null}" Grid.ColumnSpan="2"/>
         <TextBox x:Name="TextBoxTimer" HorizontalAlignment="Left" Height="20" Margin="10,34,0,0" TextWrapping="Wrap" Text="1234567" VerticalAlignment="Top" Width="93" TextAlignment="Center" Grid.ColumnSpan="2"/>
-        <TextBox x:Name="TextBoxDirLabel" HorizontalAlignment="Left" Margin="0,62,0,0" TextWrapping="Wrap" Text="Direction" VerticalAlignment="Top" Width="115" TextAlignment="Center" BorderBrush="{x:Null}" Background="{x:Null}" Grid.ColumnSpan="2"/>
-        <TextBox x:Name="TextBoxDir" HorizontalAlignment="Left" Height="20" Margin="10,80,0,0" TextWrapping="Wrap" Text="1234567" VerticalAlignment="Top" Width="93" TextAlignment="Center" Grid.ColumnSpan="2"/>
-        <TextBox x:Name="TextBoxSpeedLabel" HorizontalAlignment="Left" Margin="0,109,0,0" TextWrapping="Wrap" Text="Speed" VerticalAlignment="Top" Width="115" TextAlignment="Center" BorderBrush="{x:Null}" Background="{x:Null}" Grid.ColumnSpan="2"/>
-        <TextBox x:Name="TextBoxSpeed" HorizontalAlignment="Left" Height="20" Margin="10,127,0,0" TextWrapping="Wrap" Text="1234567" VerticalAlignment="Top" Width="93" TextAlignment="Center" Grid.ColumnSpan="2"/>
-        <Slider x:Name="SliderSpeed" HorizontalAlignment="Left" Margin="12,156,0,0" VerticalAlignment="Top" Width="92" RenderTransformOrigin="0.495,0.474" Grid.ColumnSpan="2" InputScope="Default" Value="5" ValueChanged="SliderSpeed_ValueChanged" Minimum="1" TickPlacement="BottomRight" Cursor="Hand" IsSnapToTickEnabled="True"/>
+        <TextBox x:Name="TextBoxSpeedLabel" HorizontalAlignment="Left" Margin="0,62,0,0" TextWrapping="Wrap" Text="Speed" VerticalAlignment="Top" Width="115" TextAlignment="Center" BorderBrush="{x:Null}" Background="{x:Null}" Grid.ColumnSpan="2"/>
+        <TextBox x:Name="TextBoxSpeed" HorizontalAlignment="Left" Height="20" Margin="10,80,0,0" TextWrapping="Wrap" Text="1234567" VerticalAlignment="Top" Width="93" TextAlignment="Center" Grid.ColumnSpan="2"/>
+        <Slider x:Name="SliderSpeed" HorizontalAlignment="Left" Margin="12,109,0,0" VerticalAlignment="Top" Width="92" RenderTransformOrigin="0.495,0.474" Grid.ColumnSpan="2" InputScope="Default" Value="5" ValueChanged="SliderSpeed_ValueChanged" Minimum="1" TickPlacement="BottomRight" Cursor="Hand" IsSnapToTickEnabled="True"/>
 
         <Border x:Name="BorderMain" BorderBrush="#FF0076ED" BorderThickness="4,4,4,4" CornerRadius="4" Margin="14,5,5,5" Grid.Column="1">
-            <WindowsFormsHost x:Name="WindowsFormsHost1" SizeChanged="Window_SizeChanged" Margin="0,0,0,0" >
+            <WindowsFormsHost x:Name="WindowsFormsHost1" SizeChanged="Window_SizeChanged" Margin="0,0,0,0" Background="#FFC8FFC8" >
                 <opentk:GLControl x:Name="GLControlMain" MouseClick="GLControl_MouseClick"/>
             </WindowsFormsHost>
         </Border>
+        <RadioButton x:Name="RadioAnt" Content="Add Ant" HorizontalAlignment="Left" Margin="12,154,0,0" VerticalAlignment="Top" GroupName="ClickOptions" Click="RadioAnt_Click" ClickMode="Release" IsChecked="True"/>
+        <RadioButton x:Name="RadioFood" Content="Add Food" HorizontalAlignment="Left" Margin="12,182,0,0" VerticalAlignment="Top" GroupName="ClickOptions" RenderTransformOrigin="0.506,1.081" Click="RadioFood_Click"/>
 
     </Grid>
 </Window>

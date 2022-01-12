@@ -11,13 +11,12 @@ namespace OpenTKTutorial
     public class GridElement
     {
         public GridElementType Type;
-        public Point Position;
-        public Object Object;
+        public int AntId; // Used by Pheromone objects
+        public double PheromoneStrength; // Used by Pheromone objects
 
-        public GridElement(Point p)
+        public GridElement()
         {
             Type = GridElementType.NotAssigned;
-            Position = p;
         }
 
     }
@@ -26,6 +25,7 @@ namespace OpenTKTutorial
     {
         NotAssigned,
         Ant,
-        Pheromone
+        Pheromone,
+        Food
     }
 }

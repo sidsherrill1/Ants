@@ -73,6 +73,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Food.cs" />
     <Compile Include="Object.cs" />
     <Compile Include="Grid.cs" />
     <Compile Include="GridElement.cs" />

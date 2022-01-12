@@ -5,15 +5,27 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Forms.VisualStyles;
+using Microsoft.SqlServer.Server;
 
 namespace OpenTKTutorial
 {
     public class Ant: Object
     {
+        public static int Count = 0;
+
         public List<Pheromone> PheromoneTrail = new List<Pheromone>();
         public GridPoint PrevLocation;
         public double Direction; // radians
+        public int Id;
         private int _searchBoundaryX;
+        public HorizDirection HorizDirection;
+        public VertDirection VertDirection;
+        public State State;
+        public int WanderLevel;
+        public double SearchAngle; // radians
+        public int Speed;
+        public int FocusCountDown; // When an ant finds a pheromone, it moves towards that pheromone for 5 ticks
 
         public int SearchBoundaryX
         {
@@ -38,11 +50,32 @@ namespace OpenTKTutorial
                 else _searchBoundaryY = value;
             }
         }
-        
-        public Ant(GridPoint gridLocation) : base(gridLocation)
+
+        //-------------------------------------------------------------------
+        //
+        //
+
+        public Ant(GridPoint gridLocation)
         {
-            Col = System.Drawing.Color.FromArgb(100,249,24,241);
+            // Define ant-specific fields
             Type = GridElementType.Ant;
+            GridLocation = gridLocation;
+            Id = Count++;
+            Wandering();
+
+            // Randomly set direction
+            int draw1 = Random.Next();
+            if (draw1 % 2 == 0) HorizDirection = HorizDirection.East;
+            else HorizDirection = HorizDirection.West;
+            
+            int draw2 = Random.Next();
+            if (draw2 % 2 == 0) VertDirection = VertDirection.North;
+            else VertDirection = VertDirection.South;
+
+            // Place ant on grid
+            Grid.GridData[GridLocation.X, GridLocation.Y].AntId = Id;
+            Grid.GridData[GridLocation.X, GridLocation.Y].Type = Type;
+
         }
 
         //-------------------------------------------------------------------
@@ -56,78 +89,80 @@ namespace OpenTKTutorial
              * Defines a new pheromone object, adds it to the grid, adds it to this Ant's path.
              */
 
-            
-            Pheromone p = new Pheromone(GridLocation);
+            Pheromone p = new Pheromone(GridLocation,Id);
             PheromoneTrail.Add(p);
             if (PheromoneTrail.Count > 25)
             {
                 // Remove pheromone object from grid
-                int oldPx = PheromoneTrail[0].GridLocation.X;
-                int oldPy = PheromoneTrail[0].GridLocation.Y;
-                Grid.GridData[oldPx, oldPy].Object = null;
-                Grid.GridData[oldPx, oldPy].Type = GridElementType.NotAssigned;
-
-                // Remove pheromone object from trail
+                PheromoneTrail[0].Remove();
+                
+                // Remove pheromone object from Ant's pheromone trail
                 PheromoneTrail.RemoveAt(0);
             }
         }
 
         //-------------------------------------------------------------------
         //
-        //                                                                                              
+        //
+
+        public Point GraphToGL(Point p)
+        {
+            double fracX = (double)p.X / GlControl.Width;
+            double fracY = (double)p.Y / GlControl.Height;
+
+            double glPointX = (double)fracX * 2 - 1;
+            double glPointY = (double)fracY * 2 - 1;
+
+            return new Point(glPointX, glPointY);
+            }
+
+        //-------------------------------------------------------------------
+        //
+        //
+
         public void DrawSearchWindow()
         {
             /*
              * Draws an outline of the ant's direction vector.
              */
 
-            int hyp = 20;
+            int hyp = 50;
 
             // Boundary A 
-            //int graphPointXa = hyp * (int)Math.Cos(Direction + Math.PI / 4) + GridLocation.X;
-            //int graphPointYa = hyp * (int)Math.Sin(Direction + Math.PI / 4) + GridLocation.Y;
-            double graphPointXa = hyp * Math.Cos(Direction + Math.PI / 4) + GridLocation.X;
-            double graphPointYa = hyp * Math.Sin(Direction + Math.PI / 4) + GridLocation.Y;
+            double graphPointXA = hyp * Math.Cos(Direction + SearchAngle) + GridLocation.X;
+            double graphPointYA = hyp * Math.Sin(Direction + SearchAngle) + GridLocation.Y;
+            Point graphPointA = new Point(graphPointXA, graphPointYA);
 
-            double fracXa = (double)graphPointXa / GlControl.Width;
-            double fracYa = (double)graphPointYa / GlControl.Height;
-
-            double glPointXa = (double)fracXa * 2 - 1;
-            double glPointYa = (double)fracYa * 2 - 1;
-
+            Point glPointA = GraphToGL(graphPointA);
+            
             // Boundary B
-            //int graphPointXb = hyp * (int)Math.Cos(Direction - Math.PI / 4) + GridLocation.X;
-            //int graphPointYb = hyp * (int)Math.Sin(Direction - Math.PI / 4) + GridLocation.Y;
-            double graphPointXb = hyp * Math.Cos(Direction - Math.PI / 4) + GridLocation.X;
-            double graphPointYb = hyp * Math.Sin(Direction - Math.PI / 4) + GridLocation.Y;
+            double graphPointXB = hyp * Math.Cos(Direction - SearchAngle) + GridLocation.X;
+            double graphPointYB = hyp * Math.Sin(Direction - SearchAngle) + GridLocation.Y;
+            Point graphPointB = new Point(graphPointXB, graphPointYB);
 
-            double fracXb = (double)graphPointXb / GlControl.Width;
-            double fracYb = (double)graphPointYb / GlControl.Height;
+            Point glPointB = GraphToGL(graphPointB);
 
-            double glPointXb = (double)fracXb * 2 - 1;
-            double glPointYb = (double)fracYb * 2 - 1;
-
-            GL.Begin(PrimitiveType.Lines);
-            GL.Color3(System.Drawing.Color.Black);
-            GL.Vertex2(GlLocation.X, GlLocation.Y);
-            GL.Vertex2(glPointXa, glPointYa);
-            GL.Vertex2(GlLocation.X, GlLocation.Y);
-            GL.Vertex2(glPointXb, glPointYb);
-            GL.End();
+            //GL.Begin(PrimitiveType.Lines);
+            //GL.Color3(System.Drawing.Color.Black);
+            //GL.Vertex2(GlLocation.X, GlLocation.Y);
+            //GL.Vertex2(glPointA.X, glPointA.Y);
+            //GL.Vertex2(GlLocation.X, GlLocation.Y);
+            //GL.Vertex2(glPointB.X, glPointB.Y);
+            //GL.End();
 
             // Set search boundaries
-            if (graphPointXa != GridLocation.X) SearchBoundaryX = (int)graphPointXa;
-            else SearchBoundaryX = (int)graphPointXb;
+            if (graphPointXA != GridLocation.X) SearchBoundaryX = (int)graphPointXA;
+            else SearchBoundaryX = (int)graphPointXB;
 
-            if (graphPointYa != GridLocation.Y) SearchBoundaryY = (int)graphPointYa;
-            else SearchBoundaryY = (int)graphPointYb;
+            if (graphPointYA != GridLocation.Y) SearchBoundaryY = (int)graphPointYA;
+            else SearchBoundaryY = (int)graphPointYB;
         }
 
         //-------------------------------------------------------------------
         //
         //
 
-        public double? ScanSurroundings()
+        public double ScanSurroundings()
         {
             int startingX;
             int endingX;
@@ -156,55 +191,111 @@ namespace OpenTKTutorial
                 endingY = GridLocation.Y;
             }
 
+            // Loop through grid elements in search window and look for pheromones
+            // If no pheromones found, return the default mean (45) angle to move towards
+            double goal = 45;
+            double targetStrength = 0;
             for (int x = startingX; x < endingX; x++)
             {
                 for (int y = startingY; y < endingY; y++)
                 {
-                    if (Grid.GridData[x, y].Type == GridElementType.Pheromone)
-                    {
-                        // Change ant color to signify identified pheromone
-                        Col = System.Drawing.Color.Aqua;
+                    GridElementType xyType = Grid.GridData[x, y].Type;
+                    int xyAntId = Grid.GridData[x, y].AntId;
+                    double xyStrength = Grid.GridData[x, y].PheromoneStrength;
 
+                    if (xyType == GridElementType.Pheromone && xyAntId != Id)
+                    {
+
+                        FollowingPheromone();
+
+                        if (xyStrength > targetStrength) targetStrength = xyStrength;
+                        else continue;
+                        
                         // Calculate angle to pheromone
                         int changeX = x - GridLocation.X;
                         int changeY = y - GridLocation.Y;
-                        double newMean = Math.Atan(Math.Abs(changeY / changeX)); //radians
-                        return newMean;
+                        
+                        if (changeX == 0)
+                        {
+                            goal = (GridLocation.X < x) ? 180 : 0;
+                        }
+                        else goal = Math.Atan(Math.Abs(changeY / changeX))*180/Math.PI; //degrees
                     }
                 }
             }
+            
+            // Lost pheromone
+            if (goal.Equals(45)) Wandering();
 
-            return null;
+            return goal;
         }
 
         //-------------------------------------------------------------------
         //
         //
 
-        public void Move(double goal = 45, int stdev = 20)
+        public void FollowingPheromone()
+        {
+            State = State.FollowingPheromone;
+            Col = System.Drawing.Color.Aqua;
+            WanderLevel = 0;
+            SearchAngle = Math.PI / 2;
+            Speed = 6;
+            FocusCountDown = 5;
+        }
+
+        //-------------------------------------------------------------------
+        //
+        //
+
+        public void Wandering()
+        {
+            State = State.Wandering;
+            Col = System.Drawing.Color.DeepPink;
+            WanderLevel = 20;
+            SearchAngle = Math.PI / 4;
+            Speed = 5;
+            FocusCountDown = 0;
+        }
+
+        //-------------------------------------------------------------------
+        //
+        //
+
+        public double SampleGaussian(double mean, int stdev)
         {
             /*
-             * Returns radian angle for next move based on a Gaussian distribution
+             * Generates angle of movement (theta) by Sampling from a Gaussian distribution
              */
 
-            // Capture current location as previous location and remove ant from previous location on grid
-            PrevLocation = GridLocation;
-            Grid.GridData[GridLocation.X, GridLocation.Y].Object = null;
-            Grid.GridData[GridLocation.X, GridLocation.Y].Type = GridElementType.NotAssigned;
-
-            // Generate angle of movement (theta) by Sampling from a Gaussian distribution
             // This requires sampling from a uniform random of (0,1]
             // but random.NextDouble() returns a sample of [0,1).
             double x1 = 1 - Random.NextDouble(); // Correct sampling range
             double x2 = 1 - Random.NextDouble(); // Correct sampling range
 
             double y1 = Math.Sqrt(-2.0 * Math.Log(x1)) * Math.Cos(2.0 * Math.PI * x2);
-            double y1Adjusted = y1 * stdev + goal; // goal is the "mean" of our distribution
+            double y1Adjusted = y1 * stdev + mean; // goal is the "mean" of our distribution
             double theta = (Math.PI / 180) * y1Adjusted; // Convert to radians
+            return theta;
+        }
 
-            int hyp = 5;
-            int deltaX = (int)(hyp * Math.Cos(theta));
-            int deltaY = (int)(hyp * Math.Sin(theta));
+        //-------------------------------------------------------------------
+        //
+        //
+
+        public void Move(double goal = 45)
+        {
+            /*
+             * Captures current location as previous location
+             * Generates angle of movement (theta) by Sampling from a Gaussian distribution
+             * Moves ant based on angle
+             */
+
+            PrevLocation = GridLocation;
+            double theta = SampleGaussian(goal, WanderLevel);
+
+            int deltaX = (int)(Speed * Math.Cos(theta));
+            int deltaY = (int)(Speed * Math.Sin(theta));
 
             int adjDeltaX = 0;
             switch (HorizDirection)
@@ -251,8 +342,8 @@ namespace OpenTKTutorial
 
             // Update new location and add ant back to grid
             GridLocation = new GridPoint(adjDeltaX, adjDeltaY);
-            Grid.GridData[GridLocation.X, GridLocation.Y].Object = this;
-            Grid.GridData[GridLocation.X, GridLocation.Y].Type = GridElementType.Ant;
+            Grid.GridData[GridLocation.X, GridLocation.Y].AntId = Id;
+            Grid.GridData[GridLocation.X, GridLocation.Y].Type = Type;
         }
 
         //-------------------------------------------------------------------
@@ -291,10 +382,7 @@ namespace OpenTKTutorial
                 throw new Exception("Error in UpdateDirection: not capturing part of direction spectrum.");
             }
 
-            TextBoxDir.Text = Direction.ToString();
         }
-
-        
 
         //-------------------------------------------------------------------
         //
@@ -306,13 +394,11 @@ namespace OpenTKTutorial
              * Updates ant by dropping a new pheromone, moving the ant, and drawing it
              */
 
-
             DropPheromone();
             DrawSearchWindow();
-            double? goal = ScanSurroundings();
             
-            if (goal.HasValue) Move((double)goal,5);
-            else Move();
+            double goal = ScanSurroundings();
+            Move(goal);
             
             UpdateDirection();
             
@@ -343,5 +429,13 @@ namespace OpenTKTutorial
     {
         North,
         South
+    }
+
+    public enum State
+    {
+        Wandering,
+        FollowingPheromone,
+        FoundFood,
+        HeadingHome
     }
 }

@@ -27,12 +27,14 @@ namespace OpenTKTutorial
     
     public partial class MainWindow : Window 
     {
-        public Grid Grid;
-        public List<Ant> Ants = new List<Ant>();
-        public int Speed = 100;
         private DispatcherTimer _dispatchTimer;
         private Stopwatch _stopwatch = new Stopwatch();
 
+        public Grid Grid;
+        public List<Ant> Ants = new List<Ant>();
+        public List<Food> Foods = new List<Food>();
+        public int Speed = 100;
+        public ClickOption ClickOption = ClickOption.AddingAnt;
 
         //-------------------------------------------------------------------
         //
@@ -42,8 +44,11 @@ namespace OpenTKTutorial
         {
             InitializeComponent(); // Executes/creates everything in the xaml code, including GLControl
 
+            int x = GLControlMain.Width;
+            int y = GLControlMain.Height;
+
             Object.GlControl = GLControlMain;
-            Object.TextBoxDir = TextBoxDir;
+            Object.Grid = Grid;
 
             _defineDispatchTimer();
 
@@ -66,6 +71,10 @@ namespace OpenTKTutorial
             };
         }
 
+        //-------------------------------------------------------------------
+        //
+        //
+
         private void _dispatchTimer_Tick(object sender, EventArgs e)
         {
             // Display, reset, start timer
@@ -73,7 +82,6 @@ namespace OpenTKTutorial
             _stopwatch.Reset();
             _stopwatch.Start();
             
-
             UpdateBuffers();
         }
 
@@ -104,12 +112,18 @@ namespace OpenTKTutorial
             GL.ClearColor(System.Drawing.Color.Transparent);
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the buffer - overwriting each pixel to be blank
 
-            DrawGrid();
+            //DrawGrid();
             foreach (Ant a in Ants)
             {
                 a.Update();
             }
 
+            foreach (Food f in Foods)
+            {
+                f.Draw();
+            }
+
+            //Pheromone p = new Pheromone(new GridPoint(0, 1),123456);
             GL.Flush(); // Flush == Execute what's in the buffer
         }
 
@@ -132,10 +146,23 @@ namespace OpenTKTutorial
             int x = e.X;
             int y = GLControlMain.Height - e.Y;
             GridPoint gridLocation = new GridPoint(x, y);
-            Ant ant = new Ant(gridLocation);
-            Ants.Add(ant);
+
+            if (ClickOption == ClickOption.AddingAnt)
+            {
+                Ant ant = new Ant(gridLocation);
+                Ants.Add(ant);
+            } else if (ClickOption == ClickOption.AddingFood)
+            {
+                Food food = new Food(gridLocation);
+                Foods.Add(food);
+            }
+
             UpdateBuffers();
         }
+        
+        //-------------------------------------------------------------------
+        //
+        //
 
         private void GridMain_SizeChanged(object sender, SizeChangedEventArgs e)
         {
@@ -143,7 +170,12 @@ namespace OpenTKTutorial
             int y = GLControlMain.Height;
             Grid = new Grid(x, y);
             Object.Grid = Grid; // This sets the static Grid feature of the entire Ant class; an Ant does not necessarily needed to be initiated before this is done! 
+            Grid.GridData[0, 0].AntId = 7777777;
         }
+
+        //-------------------------------------------------------------------
+        //
+        //
 
         private void SliderSpeed_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
@@ -151,5 +183,30 @@ namespace OpenTKTutorial
             TextBoxSpeed.Text = e.NewValue.ToString();
             _defineDispatchTimer();
         }
+
+        //-------------------------------------------------------------------
+        //
+        //
+
+        private void RadioAnt_Click(object sender, RoutedEventArgs e)
+        {
+            ClickOption = ClickOption.AddingAnt;
+
+        }
+
+        private void RadioFood_Click(object sender, RoutedEventArgs e)
+        {
+            ClickOption = ClickOption.AddingFood;
+        }
+
+        //-------------------------------------------------------------------
+        //
+        //
+    }
+
+    public enum ClickOption
+    {
+        AddingAnt,
+        AddingFood
     }
 }

@@ -12,17 +12,14 @@ namespace OpenTKTutorial
 {
     public class Object
     {
-        public static Grid Grid; // Set after InitializeComponent();
+        public static Grid Grid; // Set after InitializeComponent(), within GridMain_SizeChanged;
         public static GLControl GlControl; // Set after InitializeComponent();
-        public static TextBox TextBoxDir;
         public static Random Random = new Random();
 
-        public double Radius = 0.03;
-        public System.Drawing.Color Col = System.Drawing.Color.White;
-        //public System.Drawing.Color Col;
-        public int Sides = 4;
-        public HorizDirection HorizDirection = HorizDirection.West;
-        public VertDirection VertDirection = VertDirection.South;
+        public double Radius = 0.02;
+        public int Sides = 20;
+
+        public System.Drawing.Color Col;
         public GridElementType Type;
 
         private Point _glLocation;
@@ -67,18 +64,6 @@ namespace OpenTKTutorial
         //
         //
 
-        public Object(GridPoint gridLocation)
-        {
-            GridLocation = gridLocation;
-            Grid.GridData[GridLocation.X, GridLocation.Y].Object = this;
-            Grid.GridData[GridLocation.X, GridLocation.Y].Type = Type;
-
-        }
-
-        //-------------------------------------------------------------------
-        //
-        //
-
         public void Draw()
         {
 
@@ -100,6 +85,9 @@ namespace OpenTKTutorial
             GL.End();
         }
 
+        //-------------------------------------------------------------------
+        //
+        //
 
         public void Draw(System.Drawing.Color col, GridPoint gridPoint, int sides, double radius)
         {
@@ -129,6 +117,7 @@ namespace OpenTKTutorial
 
     }
 
+    
     //******************************************************************************
     //
     //
