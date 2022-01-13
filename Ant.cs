@@ -26,6 +26,7 @@ namespace OpenTKTutorial
         public double SearchAngle; // radians
         public int Speed;
         public int FocusCountDown; // When an ant finds a pheromone, it moves towards that pheromone for 5 ticks
+        public GridPoint FoodLocation;
 
         public int SearchBoundaryX
         {
@@ -164,6 +165,13 @@ namespace OpenTKTutorial
 
         public double ScanSurroundings()
         {
+            /*
+             * Scans surroundings for food or pheromones
+             * If found, returns angle (in radians) to move towards, based on surroundings
+             * If no food or pheromones are found, returns the default mean angle (45)
+             */
+
+            // Define search boundaries
             int startingX;
             int endingX;
             int startingY;
@@ -191,8 +199,7 @@ namespace OpenTKTutorial
                 endingY = GridLocation.Y;
             }
 
-            // Loop through grid elements in search window and look for pheromones
-            // If no pheromones found, return the default mean (45) angle to move towards
+            // Perform search
             double goal = 45;
             double targetStrength = 0;
             for (int x = startingX; x < endingX; x++)
@@ -201,25 +208,25 @@ namespace OpenTKTutorial
                 {
                     GridElementType xyType = Grid.GridData[x, y].Type;
                     int xyAntId = Grid.GridData[x, y].AntId;
-                    double xyStrength = Grid.GridData[x, y].PheromoneStrength;
+                    
+                    if (xyType == GridElementType.Food)
+                    {
+                        GridPoint foodLocation = new GridPoint(x, y);
+                        FoundFood(foodLocation);
+                        goal = CalculateAngleToTarget(foodLocation);
+                    }
 
+                    // If ant sees a pheromone that's not it's own, make food location it's goal
                     if (xyType == GridElementType.Pheromone && xyAntId != Id)
                     {
-
                         FollowingPheromone();
 
+                        double xyStrength = Grid.GridData[x, y].PheromoneStrength;
                         if (xyStrength > targetStrength) targetStrength = xyStrength;
                         else continue;
-                        
-                        // Calculate angle to pheromone
-                        int changeX = x - GridLocation.X;
-                        int changeY = y - GridLocation.Y;
-                        
-                        if (changeX == 0)
-                        {
-                            goal = (GridLocation.X < x) ? 180 : 0;
-                        }
-                        else goal = Math.Atan(Math.Abs(changeY / changeX))*180/Math.PI; //degrees
+
+                        GridPoint pLocation = new GridPoint(x, y);
+                        goal = CalculateAngleToTarget(pLocation);
                     }
                 }
             }
@@ -233,12 +240,50 @@ namespace OpenTKTutorial
         //-------------------------------------------------------------------
         //
         //
+        public double CalculateAngleToTarget(GridPoint target)
+        {
+            /*
+             * Returns angle to target (in degrees)
+             */
+
+            int changeX = target.X - GridLocation.X;
+            int changeY = target.Y - GridLocation.Y;
+
+            double goal;
+
+            if (changeX == 0)
+            {
+                goal = (GridLocation.X < target.X) ? 180 : 0;
+            }
+            else goal = Math.Atan(Math.Abs(changeY / changeX)) * 180 / Math.PI; //degrees
+
+            return goal;
+        }
+
+        //-------------------------------------------------------------------
+        //
+        //
+
+        public void FoundFood(GridPoint p)
+        {
+            State = State.FoundFood;
+            Col = System.Drawing.Color.DeepPink;
+            WanderLevel = 0;
+            SearchAngle = Math.PI / 8;
+            Speed = 10;
+            FocusCountDown = 5;
+            FoodLocation = p;
+        }
+
+        //-------------------------------------------------------------------
+        //
+        //
 
         public void FollowingPheromone()
         {
             State = State.FollowingPheromone;
-            Col = System.Drawing.Color.Aqua;
-            WanderLevel = 0;
+            Col = System.Drawing.Color.HotPink;
+            WanderLevel = 1;
             SearchAngle = Math.PI / 2;
             Speed = 6;
             FocusCountDown = 5;
@@ -251,7 +296,7 @@ namespace OpenTKTutorial
         public void Wandering()
         {
             State = State.Wandering;
-            Col = System.Drawing.Color.DeepPink;
+            Col = System.Drawing.Color.LightPink;
             WanderLevel = 20;
             SearchAngle = Math.PI / 4;
             Speed = 5;
@@ -344,6 +389,14 @@ namespace OpenTKTutorial
             GridLocation = new GridPoint(adjDeltaX, adjDeltaY);
             Grid.GridData[GridLocation.X, GridLocation.Y].AntId = Id;
             Grid.GridData[GridLocation.X, GridLocation.Y].Type = Type;
+
+            GridLocation = FoodLocation;
+
+            // If we get to the food, update state
+            if (Equals(GridLocation, FoodLocation))
+            {
+                Wandering();
+            }
         }
 
         //-------------------------------------------------------------------
@@ -354,7 +407,7 @@ namespace OpenTKTutorial
         {
             /*
              * Updates the Direction field of the Ant based on it's new and previous *grid* locations.
-             * This field is used to define the search window that the ant looks in for food.
+             * This field is used to define the search window that the ant looks in for food/pheromones.
              */
 
             double changeX = GridLocation.X - PrevLocation.X;
@@ -391,14 +444,17 @@ namespace OpenTKTutorial
         public void Update()
         {
             /*
-             * Updates ant by dropping a new pheromone, moving the ant, and drawing it
+             * Updates ant by way of the following events:
+             *  If ant is wandering: drop pheromone, scan surroundings, move, update direction of movement, draw ant and its pheromones
+             *  If ant has found food: drop pheromone, move towards food, draw ant and its pheromones
              */
 
             DropPheromone();
             DrawSearchWindow();
+
+            double angleToTarget = (State == State.FoundFood) ? CalculateAngleToTarget(FoodLocation) : ScanSurroundings();
             
-            double goal = ScanSurroundings();
-            Move(goal);
+            Move(angleToTarget);
             
             UpdateDirection();
             
