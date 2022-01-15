@@ -32,9 +32,10 @@ namespace OpenTKTutorial
 
         public Grid Grid;
         public List<Ant> Ants = new List<Ant>();
-        public List<Food> Foods = new List<Food>();
+        public Dictionary<int,Food> Foods = new Dictionary<int,Food>();
         public int Speed = 100;
         public ClickOption ClickOption = ClickOption.AddingAnt;
+        public Point Home;
 
         //-------------------------------------------------------------------
         //
@@ -44,17 +45,14 @@ namespace OpenTKTutorial
         {
             InitializeComponent(); // Executes/creates everything in the xaml code, including GLControl
 
-            int x = GLControlMain.Width;
-            int y = GLControlMain.Height;
-
+            // Set object static fields
             Object.GlControl = GLControlMain;
             Object.Grid = Grid;
+            Object.Foods = Foods;
 
+            // Set up dispatch timer
             _defineDispatchTimer();
-
-            // Define function that will be called after initialization
             _dispatchTimer.Tick += _dispatchTimer_Tick;
-
         }
 
         //-------------------------------------------------------------------
@@ -90,15 +88,23 @@ namespace OpenTKTutorial
         //
         //
 
-        public void DrawGrid()
+        public void DrawHome()
         {
-            
-            GL.Begin(PrimitiveType.Lines);
-            GL.Color3(System.Drawing.Color.Gray);
-                GL.Vertex2(0, -1);
-                GL.Vertex2(0, 1);
-                GL.Vertex2(-1, 0);
-                GL.Vertex2(1, 0);
+            int sides = 100;
+            double radius = 0.15;
+            double aspectRatio = (double) Grid.Xsize / Grid.Ysize;
+
+            GL.Begin(PrimitiveType.LineLoop);
+            GL.Color3(System.Drawing.Color.Brown);
+
+            for (int i = 0; i < sides; i++)
+            {
+                double degInRad = i * 2 * Math.PI / sides;
+                double x = Home.X + (Math.Cos(degInRad) * radius);
+                double y = Home.Y + aspectRatio * (Math.Sin(degInRad) * radius);
+                GL.Vertex2(x, y);
+            }
+
             GL.End();
         }
 
@@ -112,15 +118,15 @@ namespace OpenTKTutorial
             GL.ClearColor(System.Drawing.Color.Transparent);
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the buffer - overwriting each pixel to be blank
 
-            //DrawGrid();
+            DrawHome();
             foreach (Ant a in Ants)
             {
                 a.Update();
             }
 
-            foreach (Food f in Foods)
+            foreach (KeyValuePair<int,Food> f in Foods)
             {
-                f.Draw();
+                f.Value.Draw();
             }
 
             //Pheromone p = new Pheromone(new GridPoint(0, 1),123456);
@@ -134,7 +140,6 @@ namespace OpenTKTutorial
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             GL.Viewport(0, 0, GLControlMain.Width, GLControlMain.Height);
-
         }
 
         //-------------------------------------------------------------------
@@ -154,7 +159,7 @@ namespace OpenTKTutorial
             } else if (ClickOption == ClickOption.AddingFood)
             {
                 Food food = new Food(gridLocation);
-                Foods.Add(food);
+                Foods.Add(food.Id,food);
             }
 
             UpdateBuffers();
@@ -166,11 +171,23 @@ namespace OpenTKTutorial
 
         private void GridMain_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            int x = GLControlMain.Width;
-            int y = GLControlMain.Height;
-            Grid = new Grid(x, y);
+
+            // Update grid
+            Grid = new Grid(GLControlMain.Width, GLControlMain.Height);
             Object.Grid = Grid; // This sets the static Grid feature of the entire Ant class; an Ant does not necessarily needed to be initiated before this is done! 
             Grid.GridData[0, 0].AntId = 7777777;
+
+            // Set up home
+            Home = new Point(0.82, -0.70);
+
+            // x and y on GLcontrol are from -1 to 1, thus range is 2
+            double fracX = (Home.X + 1) / 2;
+            double fracY = (Home.Y + 1) / 2;
+
+            int homeXasGrid = (int)(fracX * Grid.Xsize);
+            int homeYasGrid = (int)(fracY * Grid.Ysize);
+
+            Ant.HomeLocation = new GridPoint(homeXasGrid, homeYasGrid);
         }
 
         //-------------------------------------------------------------------
