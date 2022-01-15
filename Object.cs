@@ -15,10 +15,10 @@ namespace OpenTKTutorial
         public static Grid Grid; // Set after InitializeComponent(), within GridMain_SizeChanged;
         public static GLControl GlControl; // Set after InitializeComponent();
         public static Random Random = new Random();
+        public static Dictionary<int, Food> Foods;
 
         public double Radius = 0.02;
         public int Sides = 20;
-
         public System.Drawing.Color Col;
         public GridElementType Type;
 
@@ -32,16 +32,18 @@ namespace OpenTKTutorial
 
             set
             {
+                // x and y on GLcontrol are from -1 to 1, thus range is 2
+
                 double x = (double)value.X;
                 double y = (double)value.Y;
 
-                double fracX = x / GlControl.Width;
+                double fracX = x / GlControl.Width; 
                 double fracY = y / GlControl.Height;
 
                 double finalX = (double)fracX * 2 - 1;
                 double finalY = (double)fracY * 2 - 1;
 
-                _glLocation = new Point(finalX, finalY); //x and y are from -1 to 1
+                _glLocation = new Point(finalX, finalY);
             }
         }
         
@@ -83,6 +85,22 @@ namespace OpenTKTutorial
                 GL.Vertex2(x, y);
             }
             GL.End();
+
+            // If any, draw border
+            if (Type == GridElementType.Ant)
+            {
+                GL.Begin(PrimitiveType.LineLoop);
+                GL.Color3(System.Drawing.Color.Black);
+
+                for (int i = 0; i < Sides; i++)
+                {
+                    double degInRad = i * 2 * Math.PI / Sides;
+                    double x = GlLocation.X + (Math.Cos(degInRad) * Radius);
+                    double y = GlLocation.Y + (Math.Sin(degInRad) * Radius);
+                    GL.Vertex2(x, y);
+                }
+                GL.End();
+            }
         }
 
         //-------------------------------------------------------------------
