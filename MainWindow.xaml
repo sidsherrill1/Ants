@@ -32,7 +32,7 @@
                 <opentk:GLControl x:Name="GLControlMain" MouseClick="GLControl_MouseClick"/>
             </WindowsFormsHost>
         </Border>
-
-
+        <Button x:Name="ButtonScatterAnts" Content="Scatter Ants" HorizontalAlignment="Left" Height="25" Margin="17,212,0,0" VerticalAlignment="Top" Width="79" Click="ButtonScatterAnts_Click"/>
+        <Button x:Name="ButtonDropFood" Content="Drop Food" HorizontalAlignment="Left" Height="25" Margin="17,252,0,0" VerticalAlignment="Top" Width="79" Click="ButtonDropFood_Click"/>
     </Grid>
 </Window>

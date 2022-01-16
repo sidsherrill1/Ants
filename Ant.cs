@@ -46,6 +46,7 @@ namespace OpenTKTutorial
         public Ant(GridPoint gridLocation)
         {
             // Define ant-specific fields
+            Sides = 3;
             Type = GridElementType.Ant;
             GridLocation = gridLocation;
             Id = Count++;
@@ -199,13 +200,14 @@ namespace OpenTKTutorial
                             angleToTarget = CalculateAngleToTarget(pLocation);
                             foundTarget = true;
 
-                            FollowingPheromone();
+                            FollowingWanderingPheromone();
                             break;
                         }
                         case PheromoneType.MovingTowardsFood:
                         {
                             GridPoint pLocation = new GridPoint(p.X, p.Y);
                             angleToTarget = CalculateAngleToTarget(pLocation);
+                            FollowingFoundFoodPheromone();
                             return angleToTarget;
                         }
 
@@ -310,7 +312,6 @@ namespace OpenTKTutorial
         //-------------------------------------------------------------------
         //
         //
-
 
         public void Move(double angleToTarget)
         {
@@ -445,7 +446,20 @@ namespace OpenTKTutorial
         //
         //
 
-        public void FollowingPheromone()
+        public void FollowingFoundFoodPheromone()
+        {
+            State = State.FollowingPheromone;
+            Col = System.Drawing.Color.HotPink;
+            WanderLevel = 5;
+            SearchAngle = Math.PI;
+            Speed = 8;
+        }
+
+        //-------------------------------------------------------------------
+        //
+        //
+
+        public void FollowingWanderingPheromone()
         {
             State = State.FollowingPheromone;
             Col = System.Drawing.Color.HotPink;

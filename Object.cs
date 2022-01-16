@@ -14,11 +14,11 @@ namespace OpenTKTutorial
     {
         public static Grid Grid; // Set after InitializeComponent(), within GridMain_SizeChanged;
         public static GLControl GlControl; // Set after InitializeComponent();
-        public static Random Random = new Random();
+        public static Random Random;
         public static Dictionary<int, Food> Foods;
 
         public double Radius = 0.02;
-        public int Sides = 20;
+        public int Sides = 4;
         public System.Drawing.Color Col;
         public GridElementType Type;
 
